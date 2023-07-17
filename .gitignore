@@ -1,0 +1,6 @@
+.env
+data
+__pycache__
+chromedriver_win32
+config.json
+dbs
