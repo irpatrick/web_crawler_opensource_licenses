@@ -3,18 +3,18 @@ import scrapy
 import json
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
-from LinkModel import Link
-from util import Utils
+from storage.LinkModel import Link
+from utils.util import DataProcessor
 
 
 class StaticSpider(CrawlSpider):
     name = "static"
-    configurations = {}
+    CONFIGS = {}
     def __init__(self, CONFIGS, DB, TEST=True, *args, **kwargs):
 
         self.allowed_domains = [CONFIGS["domain"],]
         self.start_urls = [CONFIGS["start_url"],]
-        self.configurations = CONFIGS
+        self.CONFIGS = CONFIGS
         self.db = DB
         self.is_test = TEST
         self.rules = (
@@ -26,12 +26,12 @@ class StaticSpider(CrawlSpider):
 
     def parse_items(self, response):
         # print(f"+++++++++++++ {self.configurations['title_selector']} +++++++++++")
-        title = response.css(f'{self.configurations["title_selector"]}').get()
-        description = response.css(f'{self.configurations["description_selector"]}').get()
+        title = response.css(f'{self.CONFIGS["title_selector"]}').get()
+        description = response.css(f'{self.CONFIGS["description_selector"]}').get()
         tags_list = []
         # The page has tags
-        if self.configurations["tags_selector"] is not None:
-            tags = response.css(f'{self.configurations["tags_selector"]}')
+        if self.CONFIGS["tags_selector"] is not None:
+            tags = response.css(f'{self.CONFIGS["tags_selector"]}')
             # Parssing html using beautiful soup for better html extraction
             # soup = BeautifulSoup(tags, 'html.parser')
             c = 0
@@ -51,18 +51,20 @@ class StaticSpider(CrawlSpider):
                 "type":"link",
                 "tags": tags_list,
                 "isPrivate":False,
-                "organization":self.configurations["source_name"]
+                "organization":self.CONFIGS["source_name"],
+                "html": f"{response}",
+                "text":response.css("p::text")
         }
         # pass the collected data in our util factory for tranformation and sanity check
-        u = Utils(data)
+        processed_data = DataProcessor(data)
        
         # If the link has no title skip it
-        if u.has_null_title():
+        if processed_data.has_null_title():
             pass
         else:
             # Strip the text and set the description=title if there is no description
-            u.nomalize_text()
-            data = u.data
+            # processed_data.nomalize_text()
+            data = processed_data.data
             # Create a Link object to get the hashvalue 
             link = Link(
                 data=data.get('data'),
@@ -83,7 +85,7 @@ class StaticSpider(CrawlSpider):
                     # print(soup.text)
                 
             # Save the data to a JSON file for quick visualization and testing in case TEST is True
-            with open(f'{self.configurations["file_name"]}.json', 'a') as f:
+            with open(f'{self.CONFIGS["file_name"]}.json', 'a') as f:
                 json.dump(data, f)
                 f.write(',\n')
 

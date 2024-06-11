@@ -3,12 +3,12 @@ from cgitb import text
 import hashlib
 import json
 # from urllib import response
-from h11 import Response
+# from h11 import Response
 import requests
 import time
-from util import cprint
+from utils.util import cprint
 # from CCUI import print
-from sql_db import Database
+from storage.sql_db import Database
 from dotenv import load_dotenv
 import os
 
@@ -18,14 +18,15 @@ class API:
     
     token = ""
 
-    def __init__(self, sleep_time=3, slot=10) -> None:
+    def __init__(self, sleep_time=3, slot=100, TEST=True) -> None:
          # Load the environment variables from the .env file
         load_dotenv()
-        self.email = os.getenv("EMAIL")
-        self.password = os.getenv("PASSWORD")
-        self.base_url = os.getenv("BASE_URL_LOCAL")
+        self.email = os.getenv("EMAIL_TEST") if TEST  else os.getenv("EMAIL")
+        self.password = os.getenv("PASSWORD_TEST") if TEST else os.getenv('PASSWORD')
+        self.base_url = os.getenv("BASE_URL_LOCAL") if TEST else os.getenv('BASE_URL')
         self.slot = slot
         self.sleep_time = sleep_time
+        self.TEST = TEST
 
     def authorize(self, password):
         hash_object = hashlib.sha256()
@@ -88,6 +89,7 @@ class API:
         }
 
         # Define the request payload 
+        # print(link.thems)
         payload = {
             "link": link.data,
             "name": link.name,
@@ -96,7 +98,8 @@ class API:
             "isPrivate": link.isPrivate,
             "type": link.type,
             "category": link.category,
-            "tags": link.tags
+            "tags": link.tags,
+            "themes":link.thems
         }
 
         # Send the POST request
@@ -107,7 +110,7 @@ class API:
         if 200 <=  response.status_code < 290:
             cprint("===> Request successful")
             cprint("===> Updating the database unpublished => published")
-            d.mark_as_visited(link.hash_value)
+            d.mark_as_visited(link.hash_value, self.TEST)
         else:
             cprint("===> Request failed")
 
@@ -122,7 +125,7 @@ class API:
         if self.authorize(password=pass_code):
 
             d = Database()
-            results = d.get_all_links_by_publishment_status(count=self.slot)
+            results = d.get_all_links_by_publishment_status(TEST=self.TEST, count=self.slot)
 
             for r in results:
                 response = self.send_http_post_request(r, d)
