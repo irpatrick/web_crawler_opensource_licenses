@@ -4,15 +4,15 @@ import os
 import subprocess
 from time import sleep
 from xml.etree.ElementInclude import include
-from scrapy.crawler import CrawlerProcess
-from scrapy import cmdline
+# from scrapy.crawler import CrawlerProcess
+# from scrapy import cmdline
 from apis.api import API
 from spiders.dynamic import DynamicSpider
 
 from spiders.fetchopensouce import FetchOpenSource
 from spiders.licenses import LicenceAnalyser
 from spiders.static import StaticSpider
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from storage.sql_db import Database
 from utils.classifier import Classify
 from utils.util import cprint

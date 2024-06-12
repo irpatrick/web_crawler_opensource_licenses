@@ -4,3 +4,4 @@ __pycache__
 chromedriver_win32
 config.json
 dbs
+env
